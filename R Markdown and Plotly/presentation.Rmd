@@ -1,0 +1,53 @@
+---
+title: "R Markdown and Plotly"
+author: "Riki Uusoksa"
+date: "12 May, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Week 3 Assignment for Developing Data Products -course
+
+This presentation will have an SVD analysis of a jpeg image with original dimensions of 200x224, which is then reconstructed with ranks {2, 10, 25, 50} 
+
+## Analysis of SVD
+
+```{r face, echo = FALSE, warning = FALSE, message = FALSE}
+library(jpeg)
+library(plotly)
+set.seed(123)
+
+bFly <- readJPEG('./data/butterfly_lowres.jpg')
+bFly.m <- matrix(bFly, nrow(bFly), ncol(bFly))
+
+svdb <- svd(bFly.m)
+y_vals <- svdb$d[1:60]/sum(svdb$d)
+
+a <- list(autorange='reversed', showgrid=F, zeroline=F, showticklabels=F, showline=F, ticks='')
+p0 <- plot_ly(z = bFly.m, type='heatmap', showscale=FALSE, ticks='') %>% layout(yaxis=a, xaxis=a)
+p1 <- plot_ly(x=1:60, y=svdb$d[1:60], type='scatter', showlegend=FALSE)
+p2 <- plot_ly(x=1:60, y=y_vals, type='scatter', showlegend=FALSE)
+p_1 <- subplot(p0, p1, p2, margin=.05) %>% layout(title='Proportion of variance explained')
+p_1
+
+approx_2 <- svdb$u[, 1:2] %*% diag(svdb$d[1:2]) %*% t(svdb$v[, 1:2]) 
+approx_10 <- svdb$u[,1:10] %*% diag(svdb$d[1:10]) %*% t(svdb$v[,1:10])
+approx_25 <- svdb$u[,1:25] %*% diag(svdb$d[1:25]) %*% t(svdb$v[,1:25])
+approx_50 <- svdb$u[,1:50] %*% diag(svdb$d[1:50]) %*% t(svdb$v[,1:50])
+approx_all <- svdb$u %*% diag(svdb$d) %*% t(svdb$v)
+```
+
+## Different levels of reconstruction
+
+```{r reconst, echo = FALSE, warning = FALSE, message = FALSE}
+p3 <- plot_ly(z = approx_2, type='heatmap', showscale=FALSE, ticks='') %>% layout(yaxis=a, xaxis=a)
+p4 <- plot_ly(z = approx_10, type='heatmap', showscale=FALSE, ticks='') %>% layout(yaxis=a, xaxis=a)
+p5 <- plot_ly(z = approx_25, type='heatmap', showscale=FALSE, ticks='') %>% layout(yaxis=a, xaxis=a)
+p6 <- plot_ly(z = approx_50, type='heatmap', showscale=FALSE, ticks='') %>% layout(yaxis=a, xaxis=a)
+p_2 <- subplot(p3, p4, p5, p6, shareX=TRUE, shareY=TRUE) %>% layout(title='Reconstructed with ranks 2, 10, 25 and 50', margin=list(l=30, r=30, b=30, t=50))
+p_2
+```
+
